@@ -8,6 +8,8 @@ using namespace std;
 int num;
 mutex mtx;
 bool ready=false;
+bool readyCons = false;
+bool readyProd = false;
 condition_variable cv;
 void consumer()
 {
@@ -15,13 +17,10 @@ void consumer()
 	int c = 0;
 	while (c < 10)
 	{
-		while (ready == false)
-		{
-			cv.wait(ul, [] {return (ready == true) ? true : false; });
-			cout << "awoke..." << endl;
-		}
-		ready = false;
+		cv.wait(ul, [] {return (ready == true) ? true : false; });
+		cout << "awoke..." << endl;
 		cout << "consumed: " << num << endl<<endl;
+		ready = false;
 		cv.notify_one();
 		c++;
 	}
@@ -34,14 +33,11 @@ void provider()
 	unique_lock <mutex> ul(mtx);
 	while (c < 10)
 	{
-		if (ready == true)
-		{
-			cv.wait(ul, [] {return (ready == false) ? true : false; });
-		}
-		ready = true;
 		num = rand();
 		cout << "provide: " << num << endl;
+		ready = true;
 		cv.notify_one();
+		cv.wait(ul, [] {return (ready == false) ? true : false; });
 		c++;
 	}
 }
